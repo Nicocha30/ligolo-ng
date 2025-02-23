@@ -3,6 +3,7 @@ package smartping
 import (
 	"github.com/go-ping/ping"
 	"github.com/sirupsen/logrus"
+	"fmt"
 	"net"
 	"os/exec"
 	"runtime"
@@ -17,9 +18,12 @@ func TryResolve(address string) bool {
 		Mask: []byte{0xf0, 0x00, 0x00, 0x00},
 	}
 
-	if magicNet.Contains(net.ParseIP(address)) {
+	if ip := net.ParseIP(address).To4(); ip != nil && magicNet.Contains(ip) {
 		logrus.Debug("MagicIP Ping detected, returning true")
-		// Magic IP detected
+		
+		// Dynamically map the IP within the 127.x.x.x range
+		mappedIP := fmt.Sprintf("127.%d.%d.%d", ip[1], ip[2], ip[3])
+		logrus.Debugf("Mapped MagicIP to: %s", mappedIP)
 		return true
 	}
 	methods := []func(string) (bool, error){
